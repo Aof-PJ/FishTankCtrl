@@ -1,0 +1,221 @@
+.head{
+    max-width: 50rem;
+    margin: auto;
+    padding-top: 5%;
+}
+
+.checkbox-wrapper-2 .ikxBAC {
+    appearance: none;
+    background-color: #dfe1e4;
+    border-radius: 72px;
+    border-style: none;
+    flex-shrink: 0;
+    height: 2vw;
+    margin: 0;
+    position: relative;
+    width: 3vw;
+}
+
+.checkbox-wrapper-2 .ikxBAC::before {
+    bottom: -6px;
+    content: "";
+    left: -6px;
+    position: absolute;
+    right: -6px;
+    top: -6px;
+}
+
+.checkbox-wrapper-2 .ikxBAC,
+.checkbox-wrapper-2 .ikxBAC::after {
+    transition: all 100ms ease-out;
+}
+
+.checkbox-wrapper-2 .ikxBAC::after {
+    background-color: #fff;
+    border-radius: 50%;
+    content: "";
+    height: 1.4vw;
+    left: 0.3vw;
+    position: absolute;
+    top: 0.3vw;
+    width: 1.4vw;
+}
+
+.checkbox-wrapper-2 input[type=checkbox] {
+    cursor: default;
+}
+
+.checkbox-wrapper-2 .ikxBAC:hover {
+    background-color: #c9cbcd;
+    transition-duration: 0s;
+}
+
+.checkbox-wrapper-2 .ikxBAC:checked {
+    background-color: #6e79d6;
+}
+
+.checkbox-wrapper-2 .ikxBAC:checked::after {
+    background-color: #fff;
+    left: 1.3vw;
+}
+
+.checkbox-wrapper-2 :focus:not(.focus-visible) {
+    outline: 0;
+}
+
+.checkbox-wrapper-2 .ikxBAC:checked:hover {
+    background-color: #535db3;
+}
+
+table, tr, th, td {
+    width: 20%;
+    border:1px solid black;
+    border-collapse: collapse;
+    text-align: center;
+}
+
+.bgLvl {
+    width: 20%;
+    background-color: #ddd;
+    display:inline-block;
+}
+
+.lvl {
+    width: 0%; 
+    height: 15px;
+    background-color: #04AA6D;
+}
+
+.block {
+    border-radius: 4px;
+    padding: 2%;
+    margin-top: 2%;
+    font-size: 1.5vw;
+}
+
+.innerBlock {
+    margin-left: 3%; 
+    padding: 2%;
+}
+
+.headInnerText {
+    padding: 2%;
+}
+
+.feedTimer {
+    background-color: rgb(194, 219, 214);
+}
+
+.innerFeedTimer {
+    background-color: rgb(255, 255, 255);
+}
+
+.waterData {
+    background-color: rgb(160, 184, 216);
+}
+
+.innerWaterData {
+    background-color: rgb(255, 255, 255);
+}
+
+.dateTimeINP {
+    font-size: 1.5vw;
+}
+
+.button_del {
+    width: 100%; 
+    font-size: 1.5vw;
+    border: none;
+}
+
+.button_now {
+    padding: 1.5% 2.5%;
+    font-size: 1vw;
+    background-color: #04AA6D;
+    border: none;
+    color: white;
+    border-radius: 8px;
+}
+
+.button_now:active {
+    background-color: #056b46;
+}
+
+/* led light cycle */
+.slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 25px;
+    background: #d3d3d3;
+    outline: none;
+    opacity: 0.7;
+    -webkit-transition: .2s;
+    transition: opacity .2s;
+  }
+  
+  .slider:hover {
+    opacity: 1;
+  }
+  
+  .slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 25px;
+    height: 25px;
+    background: #04AA6D;
+    cursor: pointer;
+  }
+  
+  .slider::-moz-range-thumb {
+    width: 25px;
+    height: 25px;
+    background: #04AA6D;
+    cursor: pointer;
+  }
+/*  */
+
+@media screen and (max-width: 800px) {
+    .head{
+        max-width: 40rem;
+    }
+
+    table, tr, th, td{
+        width: 100%;
+    }
+
+    .bgLvl {
+        width: 60%;
+    }
+
+    .button_now {
+        font-size: 5vw;
+    }
+
+    .block{
+        font-size: 5vw;
+    }
+
+    .button_del{
+        font-size: 5vw;
+    }
+
+    .dateTimeINP {
+        font-size: 4vw;
+    }
+
+    .checkbox-wrapper-2 .ikxBAC {
+        height: 4vw;
+        width: 6vw;
+    }
+
+    .checkbox-wrapper-2 .ikxBAC::after {
+        height: 2.8vw;
+        left: 0.6vw;
+        top: 0.6vw;
+        width: 2.8vw;
+    }
+
+    .checkbox-wrapper-2 .ikxBAC:checked::after {
+        left: 2.6vw;
+    }
+}

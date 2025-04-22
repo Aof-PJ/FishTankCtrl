@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta charset=\UTF-8\>
+        <title>FishTank Control</title>
+        <script>
+            var LoginData = localStorage.getItem("LoginData");
+            if(LoginData != null){
+                window.location.href = "./index.html";
+            }
+        </script>
+        <link rel="stylesheet" href="./style/login.css">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+        <script src="https://www.gstatic.com/firebasejs/8.1.0/firebase-app.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/8.1.0/firebase-database.js"></script>
+        <!-- Firebase Config -->
+        <script>
+            var firebaseConfig = {
+                apiKey: "<Web_API_Key>",
+                authDomain: "<Webserver_Url>",
+                databaseURL: "<DB_URL>",
+                projectId: "<Project_ID>",
+                storageBucket: "<StorageBucket>",
+                messagingSenderId: "Sender_ID",
+                appId: "<APP_ID>"
+            };
+            firebase.initializeApp(firebaseConfig);
+        </script>
+    </head>
+    <body class="text-center">
+        <div class="form-login">
+            <h1 class="mb-3">FishTank Control</h1>
+            <div>
+                <form onsubmit="login()" id="login_form">
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control" id="DeviceName" placeholder="Device Name" required>
+                        <label for="DeviceName">Device Name</label>
+                    </div>
+                    <div class="form-floating">
+                        <input type="password" class="form-control" id="Password" placeholder="Password" required>
+                        <label for="Password">Password</label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 mt-3">Login</button>
+                </form>
+            </div>
+        </div>
+
+        <script>
+            const form = document.getElementById("login_form")
+            form.addEventListener('submit', function(event) {
+                event.preventDefault();
+            })
+
+            function login(event){
+                DeviceName = document.getElementById("DeviceName").value;
+                password = document.getElementById("Password").value;
+                firebase.database().ref('/fishTank_ctrl/').once('value', (data)=>{
+                    dataDB = data.val();
+                    device_id = null;
+                    for(let ID in dataDB){
+                        if(dataDB[ID].deviceName == DeviceName){
+                            device_id = ID;
+                            break;
+                        }
+                    }
+
+                    if(
+                        dataDB != null && 
+                        device_id != null && 
+                        password == dataDB[device_id].password
+                    ){
+                        localStorage.setItem("LoginData", device_id);
+                        window.location.href = "./index.html";
+                    }else{
+                        window.location.href = "./login.html";
+                    }
+                })
+            }
+        </script>
+    </body>
+</html>

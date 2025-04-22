@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta charset=\UTF-8\>
+        <title>FishTank Control</title>
+        <script>
+            var Device = localStorage.getItem("LoginData");
+            if(Device == null){
+                window.location.href = "./login.html";
+            }
+        </script>
+        <link rel="stylesheet" href="./style/index.css">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+        <script src="https://www.gstatic.com/firebasejs/8.1.0/firebase-app.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/8.1.0/firebase-database.js"></script>
+        <!-- Firebase Config -->
+        <script>
+            var firebaseConfig = {
+                apiKey: "<Web_API_Key>",
+                authDomain: "<Webserver_Url>",
+                databaseURL: "<DB_URL>",
+                projectId: "<Project_ID>",
+                storageBucket: "<StorageBucket>",
+                messagingSenderId: "Sender_ID",
+                appId: "<APP_ID>"
+            };
+            firebase.initializeApp(firebaseConfig);
+        </script>
+    </head>
+    <body>
+        <div>
+            <div class="d-flex justify-content-between align-items-center bd-highlight m-3">
+                <div class="p-2 bd-highlight">
+                    <h1>FishTank Control : <label id="device_name"></label></h1>
+                </div>
+                <div class="p-2 bd-highlight">
+                    <input class="btn btn-dark" type="button" onclick="logout()" value="logout">
+                </div>
+            </div>
+            <div class="block">
+                <div class="checkbox-wrapper-2">
+                    <input id="autoTime" type="checkbox" class="sc-gJwTLC ikxBAC"> Time Auto Set
+                </div>
+                <input class="dateTimeINP" id="DT" type='datetime-local' value=''></br>
+            </div>
+
+            <div class="block feedTimer"><h3>Feeding routine</h3>
+                <div class="innerBlock innerFeedTimer">
+                    <label style="display:inline-block; margin-top: 0px;">Food Level : </label>
+                    <div class="bgLvl">
+                        <div id="foodLvl" class="lvl"></div>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Hour</th>
+                                <th>Minute</th>
+                                <th>Management</th>
+                            </tr>
+                        </thead>
+                        <tbody id="feedTable">
+                        </tbody>
+                    </table>
+                    <div style="margin-top: 1%;">
+                        <label for="hour">Hour:</label>
+                        <input type="number" id="hour" min="0" max="23" onkeyup="if(value != ''){if(value<0) value=0; else if(value>23) value=23;}" required>
+                        <label for="minute">Minute:</label>
+                        <input type="number" id="minute" min="0" max="59" onkeyup="if(value != ''){if(value<0) value=0; else if(value>59) value=59;}" required>
+                        <input type='button' onclick='addAlarm()' value='+'>
+                    </div>
+                </div>
+                <div style="margin: 1%">
+                    <input class='button_now' type='button' value='FEED NOW' onclick='feedNow()'>
+                </div>
+            </div>
+            <div class="block waterData"><h3>Water Data : </h3>
+                <div class="innerBlock innerWaterData">
+                    <label style="display:inline-block; margin-top: 0px;">Water Temperature : </label>
+                    <div style="display:inline-block;" id="TemperatureSensor"></div>
+                </div>
+                <div style="margin: 1%">
+                    Change Water Every <label id="routine"></label> Day(s).
+                    <input class='button_now' type='button' value='Edit' onclick='editWaterRoutine()'>
+                </div>
+                <div style="margin: 1%">
+                    <input class='button_now' type='button' value='CHANGE WATER NOW' onclick='changeWaterNow()'>
+                </div>
+            </div>
+            <div class="block waterData"><h3>Light Control : </h3>
+                <div style="margin: 1%">
+                    <p>Light Open Time : <label id="startTime"></label></p>
+                    <input type="range" min="0" max="1439" value="0" class="slider" id="start">
+                    <p>Max Brightness Time : <label id="maxTime"></label></p>
+                    <input type="range" min="0" max="1439" value="1" class="slider" id="max">
+                    <p>Light Close Time : <label id="closeTime"></label></p>
+                    <input type="range" min="0" max="1439" value="2" class="slider" id="close">
+                    <input type="button" id="saveCycle" class="button_now" value="save" onclick="saveLightCycle()">
+                </div>
+            </div>
+        </div>
+
+        <script>
+            var isAutoTime = document.getElementById("autoTime");
+            isAutoTime.addEventListener('change', set_time);
+
+            var DTSet = document.getElementById("DT");
+            DTSet.addEventListener('change', set_rtc);
+
+            function addAlarm(){
+                var hourInput = document.getElementById("hour").value;
+                var minuteInput = document.getElementById("minute").value;
+    
+                if (hourInput === "" || minuteInput === "" || hourInput < 0 || hourInput > 23 || minuteInput < 0 || minuteInput > 59) {
+                    alert("โปรดใส่เวลาที่ถูกต้อง");
+                    return;
+                }
+
+                var alarbable = document.getElementById("feedTable");
+
+                var row = alarbable.insertRow();
+                var cell1 = row.insertCell(0);
+                var cell2 = row.insertCell(1);
+                var cell3 = row.insertCell(2);
+
+                cell1.innerHTML = (hourInput>9 ? "":"0") + hourInput;
+                cell2.innerHTML = (minuteInput>9 ? "":"0") + minuteInput;
+                cell3.innerHTML = "<button class='button_del' onclick='removeAlarm(this)'>del</button>";
+
+                var rows = alarbable.rows;
+                var rowsArray = Array.from(rows); // convert rows to array
+                rowsArray.sort((a, b) => {
+                    var hourA = parseInt(a.cells[0].innerHTML);
+                    var minuteA = parseInt(a.cells[1].innerHTML);
+                    var hourB = parseInt(b.cells[0].innerHTML);
+                    var minuteB = parseInt(b.cells[1].innerHTML);
+                    if (hourA === hourB) {
+                        return minuteA - minuteB;
+                    } else {
+                        return hourA - hourB;
+                    }
+                });
+                var feedTimer = [];
+                rowsArray.forEach(row => {alarbable.appendChild(row);
+                    feedTimer.push(Number(row.cells[0].innerHTML));
+                    feedTimer.push(Number(row.cells[1].innerHTML));
+                });
+                firebase.database().ref('/fishTank_ctrl/'+Device+'/FeedTimer').set(feedTimer);
+            }
+
+            function removeAlarm(btn) {
+                var feedTimer = [];
+                var row = btn.parentNode.parentNode;
+                var hour = row.cells[0].innerHTML;
+                var minute = row.cells[1].innerHTML;
+                row.parentNode.removeChild(row);
+
+                var alarbable = document.getElementById("feedTable").rows;
+                var rowsArray = Array.from(alarbable);
+                rowsArray.forEach(r => {
+                    feedTimer.push(Number(r.cells[0].innerHTML));
+                    feedTimer.push(Number(r.cells[1].innerHTML));
+                })
+                firebase.database().ref('/fishTank_ctrl/'+Device+'/FeedTimer').set(feedTimer);
+            }
+
+            function set_time(){
+                checkbox = document.getElementById("autoTime").checked;
+                datetime = document.getElementById("DT");
+
+                if(checkbox){
+                    datetime.disabled = true;
+                    var d = new Date();
+                    var currentdate = d.getFullYear() + "-"
+                        + String(d.getMonth()+1).padStart(2, '0')  + "-" 
+                        + String(d.getDate()).padStart(2, '0') + "T"  
+                        + String(d.getHours()).padStart(2, '0') + ":"  
+                        + String(d.getMinutes()).padStart(2, '0') + ":"  
+                        + String(d.getSeconds()).padStart(2, '0');
+                    datetime.value = currentdate;
+                    set_rtc();
+                }else{
+                    datetime.disabled = false;
+                }
+            }
+
+            function set_rtc(){
+                var datetime = document.getElementById("DT").value;
+                var d = new Date(datetime);
+                let day = d.getDay();
+                firebase.database().ref('/fishTank_ctrl/'+Device+"/Time/LastUpdate/Stamp").set(datetime+"-"+day);
+                firebase.database().ref('/fishTank_ctrl/'+Device+"/Time/LastUpdate/UpdateFlag").set(true);
+            }
+
+            async function loadData() {
+                var feedTimer;
+                var changeWaterRoutine;
+
+                firebase.database().ref('/fishTank_ctrl/'+Device+'/Time/Now').on('value', (data)=>{
+                    let time = data.val();
+                    console.log(time);
+                    document.getElementById("DT").value = time;
+                });
+
+                firebase.database().ref('/fishTank_ctrl/'+Device+'/deviceName').once('value', (data)=>{
+                    let DeviceName = data.val();   
+                    document.getElementById("device_name").innerHTML = DeviceName;
+                });
+
+                firebase.database().ref('/fishTank_ctrl/'+Device+'/FeedTimer').once('value', (data)=>{
+                    feedTimer = data.val();
+                    var alarbable = document.getElementById("feedTable");
+                    for(i=0; i<feedTimer.length; i+=2){
+                        var row = alarbable.insertRow();
+                        var cell1 = row.insertCell(0);
+                        var cell2 = row.insertCell(1);
+                        var cell3 = row.insertCell(2);
+
+                        Hour = feedTimer[i];
+                        Min = feedTimer[i+1];
+                        cell1.innerHTML = (Hour>9 ? "":"0") + Hour;
+                        cell2.innerHTML = (Min>9 ? "":"0") + Min;
+                        cell3.innerHTML = "<button class='button_del' onclick='removeAlarm(this)'>del</button>";
+                    }
+                });
+
+                firebase.database().ref('/fishTank_ctrl/'+Device+'/WaterChanging').once('value', (data)=>{
+                    changeWaterRoutine = data.val();
+                    document.getElementById("routine").innerHTML = changeWaterRoutine;
+                });
+
+                firebase.database().ref('/fishTank_ctrl/'+Device+'/LightCycle').once('value', (data)=>{
+                    TimeCycle = data.val();
+                    document.getElementById("startTime").innerHTML 
+                        = (TimeCycle.startHr>9?TimeCycle.startHr:"0"+TimeCycle.startHr) + ":" + (TimeCycle.startMin>9?TimeCycle.startMin:"0"+TimeCycle.startMin);
+                    document.getElementById("maxTime").innerHTML 
+                        = (TimeCycle.maxHr>9?TimeCycle.maxHr:"0"+TimeCycle.maxHr) + ":" + (TimeCycle.maxMin>9?TimeCycle.maxMin:"0"+TimeCycle.maxMin);
+                    document.getElementById("closeTime").innerHTML 
+                        = (TimeCycle.closeHr>9?TimeCycle.closeHr:"0"+TimeCycle.closeHr) + ":" + (TimeCycle.closeMin>9?TimeCycle.closeMin:"0"+TimeCycle.closeMin);
+                    document.getElementById("start").value = (TimeCycle.startHr*60) + TimeCycle.startMin;
+                    document.getElementById("max").value = (TimeCycle.maxHr*60) + TimeCycle.maxMin;
+                    document.getElementById("close").value = (TimeCycle.closeHr*60) + TimeCycle.closeMin;
+                });
+                
+                firebase.database().ref('/fishTank_ctrl/'+Device+'/Sensor/FoodLvl').on('value', (data)=>{
+                    let foodLvl = data.val();
+                    document.getElementById("foodLvl").style.width = foodLvl + "%";
+                });
+                
+                firebase.database().ref('/fishTank_ctrl/'+Device+'/Sensor/Temperature').on('value', (data)=>{
+                    let temperature = data.val();
+                    if(temperature){
+                        temperature = Number(temperature).toFixed(2);
+                    }else{
+                        temperature = "NaN";
+                    }
+                    document.getElementById("TemperatureSensor").innerHTML = temperature + " &degC";
+                });
+            }
+
+            function editWaterRoutine(){
+                var routine = prompt("Edit Changing Water Routine in Integer");
+                if(Number(routine) && routine>0){
+                    firebase.database().ref('/fishTank_ctrl/'+Device+'/WaterChanging').set(Math.round(routine));
+                    document.getElementById("routine").innerHTML = Math.round(routine);
+                }else if(routine != null){
+                    alert('Please enter a valid value. (Integer > 0)');
+                }
+            }
+
+            const sliders = document.querySelectorAll('input[type="range"]');
+
+            sliders.forEach((slider, index) => {
+                slider.addEventListener('input', () => {
+                    // จำกัดค่าของ slider ด้านบนให้ไม่เกินค่าของ slider ด้านล่าง
+                    if (index > 0) {
+                        const previousValue = parseInt(sliders[index - 1].value);
+                        const currentValue = parseInt(slider.value);
+                        
+                        if (currentValue < previousValue) {
+                            slider.value = previousValue + 1;
+                        }
+                    }
+                    
+                    // จำกัดค่าของ slider ด้านล่างให้ไม่เกินค่าของ slider ด้านบน
+                    if (index < sliders.length - 1) {
+                        const nextValue = parseInt(sliders[index + 1].value);
+                        const currentValue = parseInt(slider.value);
+                        
+                        if (currentValue > nextValue) {
+                            slider.value = nextValue - 1;
+                        }
+                    }
+                    let min = slider.value % 60
+                    let hr = (slider.value - min) / 60
+                    console.log(hr + ":" + min)
+                    document.getElementById(`${slider.id}Time`).innerHTML = (hr>9?hr:"0"+hr) + ":" + (min>9?min:"0"+min);
+                });
+            });
+
+            function saveLightCycle(){
+                sliders.forEach((slider, index) => {
+                    let min = slider.value % 60
+                    let hr = (slider.value - min) / 60
+                    firebase.database().ref('/fishTank_ctrl/'+Device+`/LightCycle/${slider.id}Hr`).set(hr);
+                    firebase.database().ref('/fishTank_ctrl/'+Device+`/LightCycle/${slider.id}Min`).set(min);
+                });
+                console.log("saved");
+            }
+
+            function feedNow(){
+                firebase.database().ref('/fishTank_ctrl/'+Device+'/ProcessNow/FeedNow').set(true);
+            }
+
+            function changeWaterNow(){
+                firebase.database().ref('/fishTank_ctrl/'+Device+'/ProcessNow/ChangeWaterNow').set(true);
+            }
+
+            function logout(){
+                localStorage.clear('LoginData');
+                window.location.href = './login.html';
+            }
+            
+            loadData();
+        </script>
+    </body>
+</html>
